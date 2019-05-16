@@ -811,7 +811,7 @@ var main = {
             if ('' === grp) {
                 return false;
             }
-            self.newGroup(grp);
+            grp = self.newGroup(grp);
             $('#group-select .divider').before('<li data-id="'+grp+'"><a class="group-opt" href="#">'+grp+'</a></li>');
             $('#group-select li[data-id="'+grp+'"] .group-opt').trigger('click');
             $('#GroupModal').modal('hide');
