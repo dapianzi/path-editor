@@ -100,7 +100,7 @@ var main = {
         var group = this.getGroup();
         group.lines.push({
             name: name || '未命名路径',
-            total: 1,
+            total: 1, // 路径单位时长(比例)
             nodes: [
                 {
                     curr: new V2(-this.cvs.width/2, 0),
@@ -125,11 +125,13 @@ var main = {
     delPath: function(idx) {
         var group = this.getGroup();
         for (var i = 0; i < group.sets.length; i++) {
+            // 删除单路径后，更新路径组受影响的路径ID
             for (var j=group.sets[i].paths.length-1; j >=0 ; j--) {
                 if (group.sets[i].paths[j].id == idx) {
-                    // self.delSetPath(j);
+                    // 删除路径
                     group.sets[i].paths.splice(j, 1);
                 } else if (group.sets[i].paths[j].id > idx) {
+                    // 路径索引-1
                     group.sets[i].paths[j].id -= 1;
                 }
             }
@@ -149,7 +151,6 @@ var main = {
         path.nodes.splice(++idx, 0, node);
         // add node option
         this.initNodeOpt();
-        // $('#node').append('<option value="'+(nodes.length-1)+'">'+utils.fillZero(this.currPath)+' - '+utils.fillZero(nodes.length-1)+'</option>');
         return idx;
     },
     modNode: function(idx, data) {
@@ -175,7 +176,6 @@ var main = {
     getGroup: function(grp) {
         grp = grp || this.currGroup;
         if (!this.data.hasOwnProperty(grp)) {
-            console.log(grp);
             this.newGroup(grp);
             this.currGroup = grp;
         }
@@ -199,7 +199,6 @@ var main = {
         if (this.getGroup().lines.length == 0) {
             this.newPath();
         }
-        // console.log(this.getGroup());
         return this.getGroup().lines[idx];
     },
     getNode: function(idx) {
@@ -207,20 +206,21 @@ var main = {
         if (idx === -1 || idx === undefined) {
             return null;
         }
-        // if (this.getPath().nodes.length == 0) {
-        //     this.newSet();
-        // }
         return this.getPath().nodes[idx];
     },
+    // 选中节点
     isNodeChosen (pos, radius) {
+        // 乘法比开方快
         return Math.pow(this.mouse.x-pos.x, 2) + Math.pow(this.mouse.y-pos.y, 2) <= Math.pow(radius*this.cvs.width/960, 2);
     },
+    // 选中bezier曲线
     isLineChosen (curr, ctr1, ctr2, next) {
         return utils.isBezierPoint(curr, ctr1, ctr2, next, this.mouse, 0.005, this.config.strokeWidth*this.cvs.width/960);
     },
+    // 刷新bezier控制点
     reNewNodeCtrlPoint: function(idx, nodes) {
         nodes = nodes || this.getPath().nodes;
-        var i = idx - 2, j=i+4;
+        var i = idx - 2, j=i+4; // 可能影响4条bezier曲线
         if (idx == -1) {
             i = 0; j = nodes.length-1;
         }
@@ -250,11 +250,11 @@ var main = {
         var ret = [], keys = ['curr', 'ctr1', 'ctr2'];
         for (var i=0; i<nodes.length; i++) {
             var tmp = utils.clone(nodes[i]);
-            
             for (var key of keys) {
                 if (!(tmp[key] instanceof V2)){
                     tmp[key] = new V2(tmp[key].x, tmp[key].y);
                 }
+                // 根据路径组配置进行坐标变换
                 tmp[key] = tmp[key].sub(conf.origin).add(conf.translate).rotate(conf.rotate).mul(conf.scale).add(conf.origin);
             }
             ret.push(tmp);
@@ -265,6 +265,7 @@ var main = {
         var total = 10;
         this.ctx.clearRect(-this.cvs.width/2, -this.cvs.height/2, this.cvs.width, this.cvs.height);
         var path = this.getPath();
+        // 计算当前时刻播放位置
         var t = this.event.play ? ((new Date().getTime()-this.play.begin)/1000)%total : -1;
         t = t * path.total/total;
         this.drawPath(path.nodes, [t], 0);
@@ -272,19 +273,22 @@ var main = {
     drawSet: function() {
         this.ctx.clearRect(-this.cvs.width/2, -this.cvs.height/2, this.cvs.width, this.cvs.height);
         var set = this.getSet();
-        console.log(this.play.maxDelay);
         for (var i=0; i<set.paths.length; i++) {
             var t = [];
             var curr = set.paths[i];
             var path = this.getPath(curr.id);
             if (this.event.play) {
+                // 记录路径组的最大播放时间 = 路径播放时间 + 路径延迟时间 + 路径重复间隔
                 currTotal = curr.delay + curr.duration + curr.repeat*curr.interval;
                 if (currTotal > this.play.maxDelay) {
                     this.play.maxDelay = currTotal;
                 }
-                t0 = ((new Date().getTime()-this.play.begin)/1000)%this.play.maxDelay - curr.delay;
+                // 当前路径最早入场时间（按最大播放时间取模循环播放）
+                var t0 = ((new Date().getTime()-this.play.begin)/1000)%this.play.maxDelay - curr.delay;
                 var count = curr.repeat;
+                // 重复各次的时间
                 while (count >= 0) {
+                    // 将实际时长换算成路径配置的时间单位
                     t.push(t0 * path.total / curr.duration);
                     t0 -= curr.interval;
                     count --;
@@ -306,6 +310,7 @@ var main = {
                 nodes[i].ctr2 = new V2(nodes[i].ctr2.x, nodes[i].ctr2.y);
             }
             var radio = i == this.currNode ? this.config.NodeRad*1.3 : this.config.NodeRad;
+            // 画节点
             this.ctx.moveTo(nodes[i].curr.x, nodes[i].curr.y);
             this.ctx.arc(nodes[i].curr.x, nodes[i].curr.y, radio, 0, Math.PI*2);
             this.ctx.fill();
@@ -313,7 +318,7 @@ var main = {
         this.ctx.closePath();
         idx = idx || 0;
         if (!this.play.prev[idx]) {
-            this.play.prev[idx] = [];
+            this.play.prev[idx] = []; // 记录前一帧的坐标，计算当前前进方向
         }
         var color = this.colors[idx%this.colors.length];
         this.ctx.strokeStyle = color;
@@ -331,6 +336,7 @@ var main = {
             if (this.event.play) {
                 for (let t in time) {
                     if (time[t] >= 0) {
+                        // 判断当前时间行进在哪一段bezier曲线中
                         if (time[t] <= nodes[i].time) {
                             var p = utils.getBezierPoint(curr, ctr1, ctr2, next, time[t]/nodes[i].time);
                             this.ctx.moveTo(nodes[i].curr.x, nodes[i].curr.y);
@@ -350,12 +356,15 @@ var main = {
                 x: curr.x - prev.x,
                 y: curr.y - prev.y,
             }
+            // 根据前点计算行进方向
             ang = Math.acos(v2.x/Math.sqrt(v2.x*v2.x + v2.y*v2.y));
+            // acos取值范围0-180,因此需要还原大于等于180°的角
             if (v2.y < 0 || (v2.y == 0 && v2.x < 0)) {
                 ang = 2*Math.PI - ang;
             }
         }
         var r = 25;
+        // 画一条“鱼”
         var points = [
             new V2(0, 0),
             new V2((-2)/Math.sqrt(3), 0.5),
@@ -370,6 +379,7 @@ var main = {
         this.ctx.beginPath();
         this.ctx.fillStyle = color;
         for (var i in points) {
+            // 坐标变换和旋转
             var p = points[i].rotate(ang*180/Math.PI).mul(r).add(new V2(curr.x, curr.y));
             if (i==0) {
                 this.ctx.moveTo(p.x, p.y);
@@ -403,7 +413,10 @@ var main = {
         // console.log('curr data', this.data);
         // console.log('curr event', this.event);
     },
+    // 获取鼠标位置
     onCanvasMouse(e){
+        // 1. 坐标系的变换（Y轴）
+        // 2. 画布元素大小与画布实际大小的比例
         this.mouse.x = (e.pageX - this.cvsOffsetX)*this.cvs.width/960 - this.cvs.width/2;
         this.mouse.y = this.cvs.height/2 - (e.pageY - this.cvsOffsetY)*this.cvs.height/540;
     },
@@ -412,6 +425,7 @@ var main = {
             return;
         }
         if (this.event.dragNode) {
+            // 拖拽节点，更新bezier控制点
             this.getNode().curr.x = this.mouse.x;
             this.getNode().curr.y = this.mouse.y;
             this.reNewNodeCtrlPoint(this.currNode);
@@ -419,6 +433,7 @@ var main = {
             this.event.choseLine = false;
             this.event.choseNode = false;
             var nodes = this.getPath().nodes;
+            // 先判断是否选中节点
             for (var i in nodes) {
                 if(this.isNodeChosen(nodes[i].curr, this.config.NodeRad)) {
                     this.currNode = i;
@@ -426,6 +441,7 @@ var main = {
                     break;
                 }
             }
+            // 后判断是否选中曲线
             if (!this.event.choseNode) {
                 for (var i=0; i<nodes.length-1; i++) {
                     if(this.isLineChosen(nodes[i].curr, nodes[i].ctr1, nodes[i].ctr2, nodes[i+1].curr)) {
@@ -436,6 +452,7 @@ var main = {
                 }
             }
         }
+        // 更新鼠标焦点样式
         if (this.event.choseNode) {
             this.initNodeForm();
             $('#canvas').removeClass('onLine').addClass('onNode');
@@ -447,8 +464,10 @@ var main = {
     },
     onCanvasDown(e){
         if (this.event.choseNode) {
+            // 选中节点时，触发拖拽
             this.event.dragNode = true;
         } else if (this.event.choseLine) {
+            // 选中曲线时，添加节点
             this.currNode = this.newNode(this.prevNode, this.mouse.x, this.mouse.y);
             this.reNewNodeCtrlPoint(this.currNode);
             this.event.choseLine = false;
@@ -457,6 +476,7 @@ var main = {
         }
     },
     onCanvasUp(e){
+        // 释放拖拽
         if (this.event.dragNode) {
             this.event.dragNode = false;
         }
@@ -669,6 +689,7 @@ var main = {
                 if (conf) {
                     tmp[key] = tmp[key].sub(conf.origin).add(conf.translate).rotate(conf.rotate).mul(conf.scale).add(conf.origin);
                 }
+                // 转换为场景坐标
                 tmp[key].x *= this.config.width/this.cvs.width;
                 tmp[key].y *= this.config.height/this.cvs.height;
             }
@@ -681,6 +702,7 @@ var main = {
         for (var i=0; i<lines.length; i++) {
             var tmp = utils.clone(lines[i]);
             for (var key of keys) {
+                // 转换为场景坐标
                 tmp[key].x *= this.config.width/this.cvs.width;
                 tmp[key].y *= this.config.height/this.cvs.height;
             }
@@ -722,6 +744,7 @@ var main = {
             }
             case 'group':       
             case 'group-buf':   {
+                // 构造protobuf结构
                 var data = {
                     linesCount: 0,
                     lines: [],
