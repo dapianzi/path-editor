@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>鱼阵编辑器</title>
+        <script src="https://cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+        <link href="https://cdn.bootcss.com/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <link href="./style.css" rel="stylesheet">
+        <script src="https://cdn.bootcss.com/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div id="wrap">
+            <div id="menu">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <span class="navbar-brand">鱼阵编辑器</span>
+                        </div>
+                        <div class="collapse navbar-collapse">
+                            <ul class="nav navbar-nav ">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span id="curr-group">默认项目</span> <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" id="group-select">
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#" id="new-group" data-toggle="modal" data-target="#GroupModal">创建项目</a></li>
+                                    </ul>
+                                </li>
+                                <li><a class="btn btn-link" href="#Delete" id="del-group">删除项目</a></li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">导出 <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" id="export">
+                                        <!-- <li><a href="#" data-target="lines">导出路径配置</a></li> -->
+                                        <!-- <li><a href="#" data-target="set">导出当前分组</a></li> -->
+                                        <li><a href="#" data-target="group">导出JSON</a></li>
+                                        <li><a href="#" data-target="group-buf">导出ProtoBuf</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#" data-target="import-data">导入</a></li>
+                                        <!-- <li role="separator" class="divider"></li> -->
+                                    </ul>
+                                </li>
+                                <li><a class="btn btn-link" href="#settings" id="setting" data-toggle="modal" data-target="#SettingModal">参数设置</a></li>
+                                <li><a class="btn btn-link" href="#play" id="run">播放鱼阵</a></li>
+                                
+                            </ul>
+                            <!-- <form class="navbar-form navbar-left">
+                                <div class="form-group">
+                                    <input type="file" class="form-control" id="file" value="">
+                                </div>
+                            </form> -->
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+            <div id="main">
+                <div id="painter">
+                    <canvas id="canvas" width="1920" height="1080" style="width: 960px; height: 540px;"></canvas>
+                </div>
+                <div id="editor">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#single" aria-controls="single" role="tab" data-toggle="tab">基础路径</a></li>
+                        <li role="presentation"><a href="#set" aria-controls="set" role="tab" data-toggle="tab">路径组</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="single">
+                            <div class="form-horizontal">
+                                <div class="form-group form-group-sm">
+                                    <div class="col-xs-12" style="margin-top: 10px;">
+                                        <div class="input-group">
+                                            <!-- <span class="input-group-addon">@</span> -->
+                                            <span class="input-group-btn dropdown">
+                                                <!-- <button class=""> -->
+                                                <a class="btn btn-sm btn-default" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                                    <!-- <span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span> -->
+                                                    <span class="caret"></span>
+                                                </a>
+                                                <ul class="dropdown-menu" id="path-select"></ul>
+                                                <!-- </button> -->
+                                            </span>
+                                            <input type="text" class="form-control" id="path-name" placeholder="基础路径名称" value=""/>
+                                            <!-- <select type="text" class="form-control path-option" id="path-curr"></select> -->
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-sm btn-default" id="path-add" style="color: #4cae4c;">
+                                                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                                </button>
+                                                <button class="btn btn-sm btn-default" id="path-del" style="color: #d43f3a;">
+                                                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="node" class="col-xs-3 control-label">节点</label>
+                                    <div class="col-xs-9">
+                                        <div class="input-group">
+                                            <select class="form-control" id="node"></select>
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-danger" id="del-node">
+                                                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="x" class="col-xs-3 control-label">X 坐标</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" class="form-control" id="x" placeholder="0"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="y" class="col-xs-3 control-label">Y 坐标</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" class="form-control" id="y" placeholder="0"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="time" class="col-xs-3 control-label">时长</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" class="form-control" id="time" placeholder=""/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="action" class="col-xs-3 control-label">动作</label>
+                                    <div class="col-xs-8">
+                                        <div class="input-group">
+                                            <select class="form-control" id="act">
+                                                <option value="">-- 无 --</option>
+                                            </select>
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-primary" type="button" id="manage-act" data-toggle="modal" data-target="#ManageActionModal">管理</button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="set">
+                            <form class="form-horizontal">
+                                <div class="form-group form-group-sm">
+                                    <div class="col-xs-12" style="margin-top: 10px;">
+                                        <div class="input-group">
+                                            <!-- <span class="input-group-addon">@</span> -->
+                                            <span class="input-group-btn dropdown">
+                                                <!-- <button class=""> -->
+                                                <a class="btn btn-sm btn-default" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                                    <!-- <span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span> -->
+                                                    <span class="caret"></span>
+                                                </a>
+                                                <ul class="dropdown-menu" id="set-select"></ul>
+                                                <!-- </button> -->
+                                            </span>
+                                            <input type="text" class="form-control" id="set-name" placeholder="路径组名称" value=""/>
+                                            <!-- <select type="text" class="form-control path-option" id="path-curr"></select> -->
+                                            <span class="input-group-btn">
+                                                <button type="button" class="btn btn-sm btn-default" id="set-add" style="color: #4cae4c;">
+                                                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                                </button>
+                                                <!-- <button type="button" class="btn btn-sm btn-default" id="set-mod" data-toggle="modal" data-target="#SetModModal" style="color: #5bc0de;">
+                                                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                                                </button> -->
+                                                <button type="button" class="btn btn-sm btn-default" id="set-del" style="color: #d43f3a;">
+                                                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="add-path">
+                                    <div class="col-xs-12">
+                                        <button type="button" class="btn btn-success">添加路径</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="SettingModal" tabindex="-1" role="dialog" aria-labelledby="SettingModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="SettingModalLabel">全局设置</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <label for="config-width" class="control-label col-sm-3">场景宽</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-width" placeholder="16">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-height" class="control-label col-sm-3">场景高</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-height" placeholder="9">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-strokeWidth" class="control-label col-sm-3">路径宽</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-strokeWidth" placeholder="4">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-NodeRad" class="control-label col-sm-3">节点大小</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-NodeRad" placeholder="10">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-fillColor" class="control-label col-sm-3">节点颜色</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-fillColor" placeholder="#000000">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-smooth" class="control-label col-sm-3">平滑度:</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" id="config-smooth" placeholder="0-1">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="save-setting">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="ImportModal" tabindex="-1" role="dialog" aria-labelledby="ImportModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="ImportModalLabel">数据导入</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal" id="data-import-form">
+                            <div class="form-group">
+                                <label for="config-width" class="control-label col-sm-3">文件格式</label>
+                                <div class="col-sm-7">
+                                    <select class="form-control" id="import-type">
+                                        <option value='protobuf'>Proto</option>
+                                        <option value='json'>Json</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-width" class="control-label col-sm-3">上传文件</label>
+                                <div class="col-sm-7">
+                                    <input type="file" class="" id="import-file" >
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="save-import">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="GroupModal" tabindex="-1" role="dialog" aria-labelledby="GroupModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="GroupModalLabel">项目管理</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <label for="group-name" class="control-label col-sm-3">项目名称</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" id="group-name" placeholder="新建项目">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="add-group">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="SetModModal" tabindex="-1" role="dialog" aria-labelledby="SetModModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="SetModModalLabel">路径组设置</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <label for="group-name" class="control-label col-sm-3">路径组名称</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" id="modal-set-name" placeholder="新建路径组">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="group-name" class="control-label col-sm-3">路径组时长</label>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" id="modal-set-time" placeholder="单位秒">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="modal-set-save">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="SetPathModal" tabindex="-1" role="dialog" aria-labelledby="SetPathModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="SetPathModalLabel">路径配置</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <label for="" class="control-label col-sm-3">原点</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">x</span>
+                                        <input type="text" class="form-control" id="origin-x" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">y</span>
+                                        <input type="text" class="form-control" id="origin-y" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="control-label col-sm-3">偏移</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">x</span>
+                                        <input type="text" class="form-control" id="translate-x" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">y</span>
+                                        <input type="text" class="form-control" id="translate-y" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="control-label col-sm-3">缩放</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">x</span>
+                                        <input type="text" class="form-control" id="scale-x" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">y</span>
+                                        <input type="text" class="form-control" id="scale-y" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="control-label col-sm-3">旋转</label>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="rotate" placeholder="0">
+                                        <span class="input-group-addon">°</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="duration" class="control-label col-sm-3">时长</label>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="duration" placeholder="0">
+                                        <span class="input-group-addon">s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="delay" class="control-label col-sm-3">延迟</label>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="delay" placeholder="0">
+                                        <span class="input-group-addon">s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="repeat" class="control-label col-sm-3">重复</label>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="repeat" placeholder="0">
+                                        <span class="input-group-addon">次</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="interval" class="control-label col-sm-3">间隔</label>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="interval" placeholder="0">
+                                        <span class="input-group-addon">s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="monsterID" class="control-label col-sm-3">怪物</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="monsterID" placeholder="0">
+                                        <span class="input-group-addon">1-5或1,2,3,4,5</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" data-id="0" id="save-set-path">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="ManageActionModal" tabindex="-1" role="dialog" aria-labelledby="ManageActionModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="ManageActionModalLabel">动作管理</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal" id="action-form">
+                            <div class="form-group">
+                                <div class="col-sm-3 col-sm-offset-1">
+                                    <input type="text" class="form-control" style="text-align: right;" id="new-act-id" placeholder="动作ID">
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="new-act-name" placeholder="动作名">
+                                        <span class="input-group-btn">
+                                            <button type="button" class="btn btn-success" id="new-act-btn">
+                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" data-id="0" id="save-action">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" charset="UTF-8" src="./protobuf.min.js"></script>
+        <script type="text/javascript" charset="UTF-8" src="./utils.js"></script>
+        <script type="text/javascript" charset="UTF-8" src="./main.js"></script>
+        <script type="text/javascript">
+            $(function(){main.ini();});
+        </script>
+    </body>
+</html>

@@ -1,0 +1,62 @@
+package FishPath;
+
+// 2维
+message FishPath_Vec2 {
+    required float x = 0;
+    required float y = 1;
+}
+
+// 路径点
+message FishPath_Node {
+    required FishPath_Vec2 curr = 0; // 起点坐标
+    required FishPath_Vec2 ctr1 = 1; // 控制点1
+    required FishPath_Vec2 ctr2 = 2; // 控制点2
+    required float time = 3; // 路径时间
+    optional int32 act = 4; // 动作ID
+}
+
+// 基础路径
+message FishPath_Line {
+    optional string name = 0;
+    required float total = 1; // 路径总时长
+    repeated FishPath_Node nodes = 2;
+    required int32 nodesCount = 3; // 路径点个数
+}
+
+// 鱼阵路径
+message FishPath_SetPath {
+    required int32 id = 0; // 路径数组索引index
+    required float delay = 1; // 入场延迟
+    required FishPath_Vec2 origin = 2; // 变换中心
+    required FishPath_Vec2 translate = 3; // 位移
+    required FishPath_Vec2 scale = 4; // 缩放
+    required float rotate = 5; // 旋转角度 0-360
+    required float duration = 6; // 单路径时间周期
+    required int32 repeat = 7; // 重复次数
+    required float interval = 8; // 重复间隔
+    repeated int32 monsterID = 9; // 怪物ID
+}
+
+// 鱼阵集合
+message FishPath_Set {
+    //optional string name = 0;
+    //required float time = 1; 
+    repeated FishPath_SetPath paths = 2; // 路径配置
+    required int32 pathsCount = 3; // 路径数
+} 
+
+// 转换过坐标的鱼阵集合
+message FishPath_Set2 {
+    //optional string name = 0;
+    //required float time = 1; 
+    repeated FishPath_Line paths = 2; // 转换好的路径点
+    required int32 length = 3; // 路径数
+} 
+
+// 鱼阵配置
+message FishPath_Config {
+    repeated FishPath_Line lines = 0;
+    required int32 linesCount = 1;
+    repeated FishPath_Set sets = 2;
+    required int32 setsCount = 3;
+}

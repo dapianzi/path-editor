@@ -1,0 +1,9 @@
+body {background-color: #EFEFEF;}
+#wrap{width: 1280px; margin: 0 auto;}
+#menu{height:60px;}
+#main{margin-top: 5px; display: flex}
+#painter{width: 960px; flex: 1}
+#editor{flex: 1; padding: 10px;}
+#canvas{background: #293441;}
+#canvas.onNode{cursor: move;}
+#canvas.onLine{cursor: crosshair;}
