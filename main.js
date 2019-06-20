@@ -65,6 +65,14 @@ var main = {
         group.sets.push(set);
         return group.sets.length-1;
     },
+    copySet: function() {
+        var group = this.getGroup();
+        var set = utils.clone(this.getSet());
+        set.name = set.name + ' 副本';
+        group.sets.push(set);
+        this.currSet = group.sets.length-1;
+        this.currPath = 0;
+    },
     modSet: function(name) {
         this.getSet().name = name;
     },
@@ -552,8 +560,8 @@ var main = {
                     path_opt +
                     '</select>' + 
                     '<span class="input-group-btn">' + 
-                        '<button class="btn btn-primary mod-path">设置</button>' + 
-                        '<button class="btn btn-danger del-path">删除</button>' + 
+                        '<button type="button" class="btn btn-primary mod-path">设置</button>' + 
+                        '<button type="button" class="btn btn-danger del-path">删除</button>' + 
                     '</span>' + 
                 '</div>' + 
             '</div>' + 
@@ -599,6 +607,7 @@ var main = {
         var _style = '';
         for (var i in this.colors) {
             _style += '.set-path:nth-child('+(parseInt(i)+2)+') .input-group-addon{background-color: '+this.colors[i]+';}\n';
+            _style += '#path-no.no-'+i+'{color: '+this.colors[i]+';}\n';
         }
         $('head').append('<style type="text/css">' + _style + '</style>');
     },
@@ -640,7 +649,7 @@ var main = {
                     '<div class="input-group">' +
                         '<input type="text" class="form-control act-name" placeholder="动作名" value="'+act_name+'">' +
                         '<span class="input-group-btn">' +
-                            '<button class="btn btn-danger act-del">' +
+                            '<button type="button" class="btn btn-danger act-del">' +
                                 '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>' +
                             '</button>' +
                         '</span>' +
@@ -760,6 +769,9 @@ var main = {
                     line.nodes = this.convertExportLine(lines[i].nodes);
                     line.nodesCount = line.nodes.length;
                     line.total = lines[i].total;
+                    line.name = lines[i].name;
+                    // if (type == 'group') {
+                    // }
                     data.lines.push(line);
                 }
                 data.linesCount = data.lines.length;
@@ -772,6 +784,9 @@ var main = {
                     set.paths = this.convertExportSet(sets[i].paths);
                     set.pathsCount = set.paths.length;
                     set.time = sets[i].time;
+                    set.name = sets[i].name;
+                    // if (type == 'group') {
+                    // }
                     data.sets.push(set);
                 }
                 data.setsCount = data.sets.length;
@@ -800,6 +815,78 @@ var main = {
             }
         }
     },
+    // helper
+    setPathEdit: function(idx) {
+        var self = this;
+        var setPath = self.getSet().paths[idx];
+        $('#save-set-path').data('id', idx); 
+        $('#path-no').removeClass().addClass('no-'+idx).html('路径'+utils.fillZero(idx));
+        $('#SetPathModal .form-control').each(function(i, e){
+            var id = $(e).attr('id');
+            var t = id.split('-');
+            if (t.length == 2) {
+                var r = t[0] == 'scale' ? 1 : (t[1]=='x'?(self.config.width/self.cvs.width):(self.config.height/self.cvs.height));
+                $(e).val(setPath[t[0]][t[1]] * r);
+            } else {
+                $(e).val(setPath[t]);
+            }
+        });
+        $('#SetPathModal').modal('toggle');
+    },
+    setPathSwitch: function(e) {
+        let idx = $('#save-set-path').data('id');
+        let self = this;
+        let length = self.getSet().paths.length;
+        let idNext = idx;
+        if (e.keyCode == 37) {
+            if (idx == 0) {
+                idNext = length-1;
+            } else {
+                idNext = idx -1 ;
+            }
+        } else if (e.keyCode == 39) {
+            if (idx == length-1) {
+                idNext = 0;
+            } else {
+                idNext = idx + 1;
+            }
+        } else {
+            return false;
+        }
+        self.setPathSave(idx);
+        console.log(idNext);
+        setTimeout(function() {
+            self.setPathEdit(idNext);
+        }, 500);
+    },
+    setPathSave: function(id) {
+        var self = this;
+        var setPath = self.getSet().paths[id];
+        $('#SetPathModal .form-control').each(function(i, e){
+            var id = $(e).attr('id');
+            if (id === 'monsterID') {
+                setPath[id] = $(e).val();
+            } else if (!isNaN($(e).val())) {
+                var t = id.split('-');
+                if (t.length == 2) {
+                    if (t[0] !== 'scale') {
+                        var r = t[1]=='x'?(self.cvs.width/self.config.width):(self.cvs.height/self.config.height);
+                        setPath[t[0]][t[1]] = parseFloat($(e).val()) * r;
+                    } else {
+                        setPath[t[0]][t[1]] = parseFloat($(e).val());
+                    }
+                } else if (id === 'repeat') {
+                    if (isNaN($(e).val()) || $(e).val() < 0 ) {
+                        alert('重复次数必须为非负整数');return false;
+                    }
+                    setPath[id] = parseInt($(e).val());
+                } else {
+                    setPath[id] = parseFloat($(e).val());
+                }
+            }
+        });
+        $('#SetPathModal').modal('toggle');
+    }, 
     bind: function() {
         var self = this;
         // canvas
@@ -968,10 +1055,15 @@ var main = {
             self.initSetForm();
             // self.drawSet();
         });
-        $('#add-path .btn').on('click', function() {
+        $('#add-path .btn-success').on('click', function() {
             self.newSetPath();
             self.newSetPathForm();
             // self.drawSet();
+        });
+        $('#add-path .btn-primary').on('click', function() {
+            self.copySet();
+            self.initSetOpt();
+            self.initSetForm();
         });
         $('#set form').on('change', '#set-name', function(e) {
             self.modSet($(this).val());
@@ -983,19 +1075,7 @@ var main = {
         }).on('click', '.mod-path', function(){
             // modal
             var idx = $(this).parents('.form-group').index() - 1;
-            var setPath = self.getSet().paths[idx];
-            $('#save-set-path').data('id', idx); 
-            $('#SetPathModal .form-control').each(function(i, e){
-                var id = $(e).attr('id');
-                var t = id.split('-');
-                if (t.length == 2) {
-                    var r = t[0] == 'scale' ? 1 : (t[1]=='x'?(self.config.width/self.cvs.width):(self.config.height/self.cvs.height));
-                    $(e).val(setPath[t[0]][t[1]] * r);
-                } else {
-                    $(e).val(setPath[t]);
-                }
-            });
-            $('#SetPathModal').modal('toggle');
+            self.setPathEdit(idx);
         }).on('click', '.del-path', function(){
             var item = $(this).parents('.set-path');
             self.delSetPath(item.index()-1);
@@ -1004,33 +1084,10 @@ var main = {
         });
         $('#save-set-path').on('click', function() {
             var id = $(this).data('id');
-            var setPath = self.getSet().paths[id];
-            $('#SetPathModal .form-control').each(function(i, e){
-                var id = $(e).attr('id');
-                if (id === 'monsterID') {
-                    setPath[id] = $(e).val();
-                } else if (!isNaN($(e).val())) {
-                    var t = id.split('-');
-                    if (t.length == 2) {
-                        if (t[0] !== 'scale') {
-                            var r = t[1]=='x'?(self.cvs.width/self.config.width):(self.cvs.height/self.config.height);
-                            setPath[t[0]][t[1]] = parseFloat($(e).val()) * r;
-                        } else {
-                            setPath[t[0]][t[1]] = parseFloat($(e).val());
-                        }
-                    } else if (id === 'repeat') {
-                        if (isNaN($(e).val()) || $(e).val() < 0 ) {
-                            alert('重复次数必须为非负整数');return false;
-                        }
-                        setPath[id] = parseInt($(e).val());
-                    } else {
-                        setPath[id] = parseFloat($(e).val());
-                    }
-                }
-            });
-            $('#SetPathModal').modal('toggle');
+            self.setPathSave(id);
             // self.drawSet();
         });
+        $('#SetPathModal').on('keyup', self.setPathSwitch.bind(self));
         // action
         $('#new-act-btn').on('click', function() {
             var act_id = $('#new-act-id').val(), act_name = $('#new-act-name').val();
@@ -1092,10 +1149,43 @@ var main = {
                 $(this).html('停止播放');
             }
         });
+        // modify batch set pathes
+        $('#batch-setpath-ok').on('click', function(){
+            function calcu(op) {
+                if (op == 'a') {
+                    return function(o,val){return o+val;}
+                }
+                if (op == 's') {
+                    return function(o,val){return o-val;}
+                }
+                if (op == 'm') {
+                    return function(o,val){return o*val;}
+                }
+                if (op == 'd') {
+                    return function(o,val){return o/val;}
+                }
+            };
+            let attr = $('#batch-setpath-attribute').val();
+            let op = $('#batch-setpath-operator').val();
+            let val = parseInt($('#batch-setpath-val').val());
+            let set = self.getSet();
+            let calcuFn = calcu(op);
+            set.paths.forEach(function(e, i){
+                if (attr == 'translate' ||
+                    attr == 'scale' ||
+                    attr == 'origin') {
+                    e[attr].x = calcuFn(e[attr].x, val);
+                    e[attr].y = calcuFn(e[attr].y, val);
+                } else {
+                    e[attr] = calcuFn(e[attr], val);
+                }
+            });
+            $('#BatchSetPathModal').modal('hide');
+        });
     },
     initEnv: function() {
         var env = storage.get('path-editor-env', true);
-        if (this.data.hasOwnProperty(env.group)) {
+        if (env && this.data.hasOwnProperty(env.group)) {
             this.currGroup = env.group;
         }
     },

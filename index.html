@@ -156,9 +156,9 @@
                                                 <button type="button" class="btn btn-sm btn-default" id="set-add" style="color: #4cae4c;">
                                                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                                                 </button>
-                                                <!-- <button type="button" class="btn btn-sm btn-default" id="set-mod" data-toggle="modal" data-target="#SetModModal" style="color: #5bc0de;">
+                                                <button type="button" class="btn btn-sm btn-default" id="set-mod" data-toggle="modal" data-target="#BatchSetPathModal" style="color: #5bc0de;">
                                                     <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
-                                                </button> -->
+                                                </button>
                                                 <button type="button" class="btn btn-sm btn-default" id="set-del" style="color: #d43f3a;">
                                                     <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                                 </button>
@@ -169,6 +169,7 @@
                                 <div class="form-group" id="add-path">
                                     <div class="col-xs-12">
                                         <button type="button" class="btn btn-success">添加路径</button>
+                                        <button type="button" class="btn btn-primary">复制路径</button>
                                     </div>
                                 </div>
                             </form>
@@ -323,7 +324,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="SetPathModalLabel">路径配置</h4>
+                        <h4 class="modal-title" id="SetPathModalLabel">路径配置 <strong id="path-no"></strong></h4>
                     </div>
                     <div class="modal-body">
                         <form class="form-horizontal">
@@ -464,6 +465,49 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
                         <button type="button" class="btn btn-primary" data-id="0" id="save-action">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="BatchSetPathModal" tabindex="-1" role="dialog" aria-labelledby="BatchSetPathModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="BatchSetPathModalLabel">路径组批量设置</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal" id="batch-setpath-form">
+                            <div class="form-group">
+                                <div class="col-sm-3 col-sm-offset-1">
+                                    <select class="form-control" id="batch-setpath-attribute">
+                                        <option value="duration">路径时长</option>
+                                        <option value="delay">入场延迟</option>
+                                        <option value="interval">重复间隔</option>
+                                        <option value="repeat">重复次数</option>
+                                        <option value="origin">中心坐标</option>
+                                        <option value="translate">偏移</option>
+                                        <option value="scale">缩放</option>
+                                        <option value="rotate">旋转</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-3 col-sm-offset-1">
+                                    <select class="form-control" id="batch-setpath-operator">
+                                        <option value="a">+</option>
+                                        <option value="s">-</option>
+                                        <option value="m">×</option>
+                                        <option value="d">÷</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" id="batch-setpath-val" placeholder="0">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" data-id="0" id="batch-setpath-ok">执行</button>
                     </div>
                 </div>
             </div>
